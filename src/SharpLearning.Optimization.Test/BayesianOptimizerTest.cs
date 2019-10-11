@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -7,6 +8,10 @@ namespace SharpLearning.Optimization.Test
     [TestClass]
     public class BayesianOptimizerTest
     {
+
+        private const int Seed = 42;
+        private static Random Random = new Random(Seed);
+
         [TestMethod]
         public void BayesianOptimizer_OptimizeBest()
         {
@@ -77,12 +82,13 @@ namespace SharpLearning.Optimization.Test
             {
                 new MinMaxParameterSpec(0.0, 1.0, Transform.Linear)
             };
-            var sut = new BayesianOptimizer(parameters, 100, 10, 5);
-            var results = sut.Optimize(MinimizeNonDeterministic);
+            var sut = new BayesianOptimizer(parameters, iterations: 500, randomStartingPointCount: 4, functionEvaluationsPerIteration: 4,
+                seed: Seed, maxDegreeOfParallelism: -1, allowMultipleEvaluations: true);
+            var results = sut.Optimize(p => MinimizeNonDeterministic(p, Random));
             var actual = new OptimizerResult[] { results.First(), results.Last() }.OrderByDescending(o => o.Error);
 
             Assert.AreEqual(2d, actual.First().Error);
-            Assert.AreEqual(0.421397202844451, actual.First().ParameterSet.First(), 0.5);
+            Assert.AreEqual(0.4, actual.First().ParameterSet.First(), 0.05);
         }
 
     }
