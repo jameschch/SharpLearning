@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -13,7 +14,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void GridSearchOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
+        public async Task GridSearchOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
             var parameters = new GridParameterSpec[] 
             {
@@ -24,7 +25,7 @@ namespace SharpLearning.Optimization.Test
                 new GridSearchOptimizer(parameters, true, maxDegreeOfParallelism.Value) : 
                 new GridSearchOptimizer(parameters);
 
-            var actual = sut.OptimizeBest(MinimizeWeightFromHeight);
+            var actual = await sut.OptimizeBest(MinimizeWeightFromHeight);
 
             Assert.AreEqual(111.20889999999987, actual.Error, Delta);
             CollectionAssert.AreEqual(new double[] { 37.5 }, actual.ParameterSet);
@@ -35,7 +36,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void GridSearchOptimizer_Optimize(int? maxDegreeOfParallelism)
+        public async Task GridSearchOptimizer_Optimize(int? maxDegreeOfParallelism)
         {
             var parameters = new GridParameterSpec[] 
             {
@@ -46,7 +47,7 @@ namespace SharpLearning.Optimization.Test
                 new GridSearchOptimizer(parameters, true, maxDegreeOfParallelism.Value) : 
                 new GridSearchOptimizer(parameters);
 
-            var actual = sut.Optimize(MinimizeWeightFromHeight);
+            var actual = await sut.Optimize(MinimizeWeightFromHeight);
 
             var expected = new OptimizerResult[] 
             { 

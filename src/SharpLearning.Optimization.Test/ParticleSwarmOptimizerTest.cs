@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -12,7 +13,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void ParticleSwarmOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
+        public async Task ParticleSwarmOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -25,7 +26,7 @@ namespace SharpLearning.Optimization.Test
                 new ParticleSwarmOptimizer(parameters, 100, maxDegreeOfParallelism: maxDegreeOfParallelism.Value) : 
                 new ParticleSwarmOptimizer(parameters, 100);
 
-            var actual = sut.OptimizeBest(Minimize);
+            var actual = await sut.OptimizeBest(Minimize);
 
             Assert.AreEqual(-0.64324321766401094, actual.Error, Delta);
             Assert.AreEqual(3, actual.ParameterSet.Length);
@@ -40,7 +41,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void ParticleSwarmOptimizer_Optimize(int? maxDegreeOfParallelism)
+        public async Task ParticleSwarmOptimizer_Optimize(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -51,7 +52,7 @@ namespace SharpLearning.Optimization.Test
                 new ParticleSwarmOptimizer(parameters, 100, maxDegreeOfParallelism: maxDegreeOfParallelism.Value) : 
                 new ParticleSwarmOptimizer(parameters, 100);
 
-            var results = sut.Optimize(MinimizeWeightFromHeight);
+            var results = await sut.Optimize(MinimizeWeightFromHeight);
 
             var actual = new OptimizerResult[] { results.First(), results.Last() };
 

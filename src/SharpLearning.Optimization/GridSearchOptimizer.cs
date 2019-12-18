@@ -36,9 +36,9 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult OptimizeBest(Func<double[], OptimizerResult> functionToMinimize) =>
+        public async Task<OptimizerResult> OptimizeBest(Func<double[], Task<OptimizerResult>> functionToMinimize) =>
             // Return the best model found.
-            Optimize(functionToMinimize).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
+            (await Optimize(functionToMinimize)).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
 
         /// <summary>
         /// Simple grid search that tries all combinations of the provided parameters.
@@ -47,7 +47,7 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult[] Optimize(Func<double[], OptimizerResult> functionToMinimize)
+        public async Task<OptimizerResult[]> Optimize(Func<double[], Task<OptimizerResult>> functionToMinimize)
         {
             // Generate the cartesian product between all parameters
             var grid = CartesianProduct(m_parameters);
@@ -59,7 +59,7 @@ namespace SharpLearning.Optimization
                 foreach (var param in grid)
                 {
                     // Get the current parameters for the current point
-                    var result = functionToMinimize(param);
+                    var result = await functionToMinimize(param);
                     results.Add(result);
                 }
             }
@@ -68,10 +68,10 @@ namespace SharpLearning.Optimization
                 var rangePartitioner = Partitioner.Create(grid, true);
                 var options = new ParallelOptions { MaxDegreeOfParallelism = m_maxDegreeOfParallelism };
 
-                Parallel.ForEach(rangePartitioner, options, (param, loopState) =>
+                Parallel.ForEach(rangePartitioner, options, async (param, loopState) =>
                 {
                     // Get the current parameters for the current point
-                    var result = functionToMinimize(param);
+                    var result = await functionToMinimize(param);
                     results.Add(result);
                 });
             }

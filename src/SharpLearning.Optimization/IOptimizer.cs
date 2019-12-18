@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SharpLearning.Optimization
 {
@@ -12,13 +13,13 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        OptimizerResult OptimizeBest(Func<double[], OptimizerResult> functionToMinimize);
+        Task<OptimizerResult> OptimizeBest(Func<double[], Task<OptimizerResult>> functionToMinimize);
         
         /// <summary>
         /// Returns all results ordered from best to worst (minimized). 
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        OptimizerResult[] Optimize(Func<double[], OptimizerResult> functionToMinimize);
+        Task<OptimizerResult[]> Optimize(Func<double[], Task<OptimizerResult>> functionToMinimize);
     }
 }

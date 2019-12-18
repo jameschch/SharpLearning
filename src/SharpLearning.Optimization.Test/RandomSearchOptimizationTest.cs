@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -13,7 +14,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void RandomSearchOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
+        public async Task RandomSearchOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -24,7 +25,7 @@ namespace SharpLearning.Optimization.Test
                 new RandomSearchOptimizer(parameters, 100, 42, true, maxDegreeOfParallelism.Value) : 
                 new RandomSearchOptimizer(parameters, 100);
 
-            var actual = sut.OptimizeBest(MinimizeWeightFromHeight);
+            var actual = await sut.OptimizeBest(MinimizeWeightFromHeight);
 
             Assert.AreEqual(110.67173923600831, actual.Error, Delta);
             Assert.AreEqual(37.533294194160632, actual.ParameterSet.Single(), Delta);
@@ -35,7 +36,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void RandomSearchOptimizer_Optimize(int? maxDegreeOfParallelism)
+        public async Task RandomSearchOptimizer_Optimize(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -46,7 +47,7 @@ namespace SharpLearning.Optimization.Test
                 new RandomSearchOptimizer(parameters, 2, 42, true, maxDegreeOfParallelism.Value) : 
                 new RandomSearchOptimizer(parameters, 2);
 
-            var actual = sut.Optimize(MinimizeWeightFromHeight);
+            var actual = await sut.Optimize(MinimizeWeightFromHeight);
 
             var expected = new OptimizerResult[]
             {

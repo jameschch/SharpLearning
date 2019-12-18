@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -10,7 +11,7 @@ namespace SharpLearning.Optimization.Test
     public class SmacOptimizerTest
     {
         [TestMethod]
-        public void SmacOptimizer_OptimizeBest_SingleParameter()
+        public async Task SmacOptimizer_OptimizeBest_SingleParameter()
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -26,14 +27,14 @@ namespace SharpLearning.Optimization.Test
                 epsilon: 0.00001,
                 seed: 42);
 
-            var actual = sut.OptimizeBest(MinimizeWeightFromHeight);
+            var actual = await sut.OptimizeBest(MinimizeWeightFromHeight);
 
             Assert.AreEqual(109.616853578648, actual.Error, Delta);
             Assert.AreEqual(37.6315924979893, actual.ParameterSet.Single(), Delta);
         }
 
         [TestMethod]
-        public void SmacOptimizer_OptimizeBest_MultipleParameters()
+        public async Task SmacOptimizer_OptimizeBest_MultipleParameters()
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -51,7 +52,7 @@ namespace SharpLearning.Optimization.Test
                 epsilon: 0.00001,
                 seed: 42);
 
-            var actual = sut.OptimizeBest(Minimize);
+            var actual = await sut.OptimizeBest(Minimize);
 
             Assert.AreEqual(-0.964878416222769, actual.Error, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -62,7 +63,7 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void SmacOptimizer_Optimize()
+        public async Task SmacOptimizer_Optimize()
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -78,7 +79,7 @@ namespace SharpLearning.Optimization.Test
                 epsilon: 0.00001,
                 seed: 42);
 
-            var actual = sut.Optimize(MinimizeWeightFromHeight);
+            var actual = await sut.Optimize(MinimizeWeightFromHeight);
 
             var expected = new OptimizerResult[]
             {
@@ -94,11 +95,11 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void SmacOptimizer_OptimizeBest_MultipleParameters_Open_Loop()
+        public async Task SmacOptimizer_OptimizeBest_MultipleParameters_Open_Loop()
         {
             var emptyResults = new List<OptimizerResult>();
 
-            OptimizerResult actual = RunOpenLoopOptimizationTest(emptyResults);
+            OptimizerResult actual = await RunOpenLoopOptimizationTest(emptyResults);
 
             Assert.AreEqual(-0.964878416222769, actual.Error, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -109,7 +110,7 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void SmacOptimizer_OptimizeBest_MultipleParameters_Open_Loop_Using_PreviousResults()
+        public async Task SmacOptimizer_OptimizeBest_MultipleParameters_Open_Loop_Using_PreviousResults()
         {
             var previousResults = new List<OptimizerResult>()
             {
@@ -146,7 +147,7 @@ namespace SharpLearning.Optimization.Test
                 new OptimizerResult(new[] {3.05129390817662,-6.16640157819092,7.49125691013935}, 0.0105475373675896),
             };
 
-            OptimizerResult actual = RunOpenLoopOptimizationTest(previousResults);
+            OptimizerResult actual = await RunOpenLoopOptimizationTest(previousResults);
 
             Assert.AreEqual(-0.96958858653084612, actual.Error, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -167,7 +168,7 @@ namespace SharpLearning.Optimization.Test
         [ExpectedException(typeof(ArgumentException))]
         public void SmacOptimizer_ArgumentCheck_Iterations()
         {
-            var sut = new SmacOptimizer(new[] { new GridParameterSpec(0, 1, 2) }, 
+            var sut = new SmacOptimizer(new[] { new GridParameterSpec(0, 1, 2) },
                 0);
         }
 
@@ -203,7 +204,7 @@ namespace SharpLearning.Optimization.Test
                 10, 20, 30, 40, 0);
         }
 
-        OptimizerResult RunOpenLoopOptimizationTest(List<OptimizerResult> results)
+        async Task<OptimizerResult> RunOpenLoopOptimizationTest(List<OptimizerResult> results)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -227,13 +228,13 @@ namespace SharpLearning.Optimization.Test
 
             // Using SmacOptimizer in an open loop.
             var initialParameterSets = sut.ProposeParameterSets(randomStartingPointsCount, results);
-            var initializationResults = sut.RunParameterSets(Minimize, initialParameterSets);
+            var initializationResults = await sut.RunParameterSets(Minimize, initialParameterSets);
             results.AddRange(initializationResults);
 
             for (int i = 0; i < iterations; i++)
             {
                 var parameterSets = sut.ProposeParameterSets(functionEvaluationsPerIterationCount, results);
-                var iterationResults = sut.RunParameterSets(Minimize, parameterSets);
+                var iterationResults = await sut.RunParameterSets(Minimize, parameterSets);
                 results.AddRange(iterationResults);
             }
 

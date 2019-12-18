@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SharpLearning.Optimization.ParameterSamplers;
 
 namespace SharpLearning.Optimization
@@ -12,7 +13,7 @@ namespace SharpLearning.Optimization
     /// <param name="parameterSet">Parameter set to run.</param>
     /// <param name="budget">Budget under which to run the parameter set.</param>
     /// <returns></returns>
-    public delegate OptimizerResult HyperbandObjectiveFunction(double[] parameterSet, double budget);
+    public delegate Task<OptimizerResult> HyperbandObjectiveFunction(double[] parameterSet, double budget);
 
     /// <summary>
     /// Hyperband optimizer based on:
@@ -54,14 +55,22 @@ namespace SharpLearning.Optimization
         /// <param name="skipLastIterationOfEachRound">True to skip the last, 
         /// most computationally expensive, iteration of each round. Default is false.</param>
         /// <param name="seed"></param>
-        public HyperbandOptimizer(IParameterSpec[] parameters, 
+        public HyperbandOptimizer(IParameterSpec[] parameters,
             int maximumBudget = 81, int eta = 3,
             bool skipLastIterationOfEachRound = false,
             int seed = 34)
         {
             m_parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
-            if(maximumBudget < 1) throw new ArgumentException(nameof(maximumBudget) + " must be at larger than 0");
-            if (eta < 1) throw new ArgumentException(nameof(eta) + " must be at larger than 0");
+            if (maximumBudget < 1)
+            {
+                throw new ArgumentException(nameof(maximumBudget) + " must be at larger than 0");
+            }
+
+            if (eta < 1)
+            {
+                throw new ArgumentException(nameof(eta) + " must be at larger than 0");
+            }
+
             m_sampler = new RandomUniform(seed);
 
             // This is called R in the paper.
@@ -69,7 +78,7 @@ namespace SharpLearning.Optimization
             m_eta = eta;
 
             // This is called `s max` in the paper.
-            m_numberOfRounds =  (int)(Math.Log(m_maximumBudget) / Math.Log(m_eta));
+            m_numberOfRounds = (int)(Math.Log(m_maximumBudget) / Math.Log(m_eta));
             // This is called `B` in the paper.
             m_totalBudgetPerRound = (m_numberOfRounds + 1) * m_maximumBudget;
 
@@ -85,9 +94,9 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult OptimizeBest(HyperbandObjectiveFunction functionToMinimize) =>
+        public async Task<OptimizerResult> OptimizeBest(HyperbandObjectiveFunction functionToMinimize) =>
             // Return the best model found.
-            Optimize(functionToMinimize).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
+            (await Optimize(functionToMinimize)).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
 
         /// <summary>
         /// Optimization using Hyberband.
@@ -95,14 +104,14 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult[] Optimize(HyperbandObjectiveFunction functionToMinimize)
+        public async Task<OptimizerResult[]> Optimize(HyperbandObjectiveFunction functionToMinimize)
         {
             var allResults = new List<OptimizerResult>();
 
             for (int rounds = m_numberOfRounds; rounds >= 0; rounds--)
             {
                 // Initial configurations count.
-                var initialConfigurationCount = (int)Math.Ceiling((m_totalBudgetPerRound / m_maximumBudget) 
+                var initialConfigurationCount = (int)Math.Ceiling((m_totalBudgetPerRound / m_maximumBudget)
                     * (Math.Pow(m_eta, rounds) / (rounds + 1)));
 
                 // Initial budget per parameter set.
@@ -125,7 +134,7 @@ namespace SharpLearning.Optimization
                     //Trace.WriteLine($"{(int)Math.Round(configurationCount)} configurations x {budget:F1} budget each");
                     foreach (var parameterSet in parameterSets)
                     {
-                        var result = functionToMinimize(parameterSet, budget);
+                        var result = await functionToMinimize(parameterSet, budget);
                         results.Add(result);
                     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -12,7 +13,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(false)]
         [DataRow(true)]
-        public void BayesianOptimizer_OptimizeBest_SingleParameter(bool runParallel)
+        public async Task BayesianOptimizer_OptimizeBest_SingleParameter(bool runParallel)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -27,7 +28,7 @@ namespace SharpLearning.Optimization.Test
                 seed: 42,
                 runParallel: runParallel);
 
-            var actual = sut.OptimizeBest(MinimizeWeightFromHeight);
+            var actual = await sut.OptimizeBest(MinimizeWeightFromHeight);
 
             Assert.AreEqual(126.50056735005998, actual.Error, Delta);
             Assert.AreEqual(38.359608938153649, actual.ParameterSet.Single(), Delta);
@@ -36,7 +37,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(false)]
         [DataRow(true)]
-        public void BayesianOptimizer_OptimizeBest_MultipleParameters(bool runParallel)
+        public async Task BayesianOptimizer_OptimizeBest_MultipleParameters(bool runParallel)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -53,7 +54,7 @@ namespace SharpLearning.Optimization.Test
                 seed: 42,
                 runParallel: runParallel);
 
-            var actual = sut.OptimizeBest(Minimize);
+            var actual = await sut.OptimizeBest(Minimize);
 
             Assert.AreEqual(-0.76070603822760785, actual.Error, Delta);
             Assert.AreEqual(3, actual.ParameterSet.Length);
@@ -64,7 +65,7 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void BayesianOptimizer_Optimize()
+        public async Task BayesianOptimizer_Optimize()
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -81,7 +82,7 @@ namespace SharpLearning.Optimization.Test
                                      // running with parallel computations will not return reproducible order of results,
                                      // so runParallel must be false for this test.
 
-            var results = sut.Optimize(MinimizeWeightFromHeight);
+            var results = await sut.Optimize(MinimizeWeightFromHeight);
             var actual = new OptimizerResult[] { results.First(), results.Last() };
 
             var expected = new OptimizerResult[]
@@ -98,11 +99,11 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void BayesianOptimizer_OptimizeBest_MultipleParameters_Open_Loop()
+        public async Task BayesianOptimizer_OptimizeBest_MultipleParameters_Open_Loop()
         {
             var emptyResults = new List<OptimizerResult>();
 
-            OptimizerResult actual = RunOpenLoopOptimizationTest(emptyResults);
+            OptimizerResult actual = await RunOpenLoopOptimizationTest(emptyResults);
 
             Assert.AreEqual(-0.72886252184027234, actual.Error, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -113,7 +114,7 @@ namespace SharpLearning.Optimization.Test
         }
 
         [TestMethod]
-        public void BayesianOptimizer_OptimizeBest_MultipleParameters_Open_Loop_Using_PreviousResults()
+        public async Task BayesianOptimizer_OptimizeBest_MultipleParameters_Open_Loop_Using_PreviousResults()
         {
             var previousResults = new List<OptimizerResult>()
             {
@@ -150,7 +151,7 @@ namespace SharpLearning.Optimization.Test
                 new OptimizerResult(new[] {3.05129390817662,-6.16640157819092,7.49125691013935}, 0.0105475373675896),
             };
 
-            OptimizerResult actual = RunOpenLoopOptimizationTest(previousResults);
+            OptimizerResult actual = await RunOpenLoopOptimizationTest(previousResults);
 
             Assert.AreEqual(-0.8720142225794828, actual.Error, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -199,7 +200,7 @@ namespace SharpLearning.Optimization.Test
                 10, 20, 30, 0);
         }
 
-        OptimizerResult RunOpenLoopOptimizationTest(List<OptimizerResult> results)
+        async Task<OptimizerResult> RunOpenLoopOptimizationTest(List<OptimizerResult> results)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -221,13 +222,13 @@ namespace SharpLearning.Optimization.Test
 
             // Using BayesianOptimizer in an open loop.
             var initialParameterSets = sut.ProposeParameterSets(randomStartingPointsCount, results);
-            var initializationResults = sut.RunParameterSets(Minimize, initialParameterSets);
+            var initializationResults = await sut.RunParameterSets(Minimize, initialParameterSets);
             results.AddRange(initializationResults);
 
             for (int i = 0; i < iterations; i++)
             {
                 var parameterSets = sut.ProposeParameterSets(functionEvaluationsPerIterationCount, results);
-                var iterationResults = sut.RunParameterSets(Minimize, parameterSets);
+                var iterationResults = await sut.RunParameterSets(Minimize, parameterSets);
                 results.AddRange(iterationResults);
             }
 

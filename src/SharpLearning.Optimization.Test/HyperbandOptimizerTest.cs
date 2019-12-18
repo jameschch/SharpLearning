@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -8,7 +9,7 @@ namespace SharpLearning.Optimization.Test
     public class HyperbandOptimizerTest
     {
         [TestMethod]
-        public void HyperbandOptimizer_OptimizeBest()
+        public async Task HyperbandOptimizer_OptimizeBest()
         {
             var parameters = new IParameterSpec[]
             {
@@ -18,10 +19,10 @@ namespace SharpLearning.Optimization.Test
             };
 
             var random = new Random(343);
-            OptimizerResult Minimize(double[] p, double r)
+            Task<OptimizerResult> Minimize(double[] p, double r)
             {
                 var error = random.NextDouble();
-                return new OptimizerResult(p, error);
+                return Task.FromResult(new OptimizerResult(p, error));
             }
 
             var sut = new HyperbandOptimizer(
@@ -31,14 +32,14 @@ namespace SharpLearning.Optimization.Test
                 skipLastIterationOfEachRound: false,
                 seed: 34);
 
-            var actual = sut.OptimizeBest(Minimize);
+            var actual = await sut.OptimizeBest(Minimize);
             var expected = new OptimizerResult(new[] { 278.337940, 0.098931, 13.177449 }, 0.009549);
 
             AssertOptimizerResult(expected, actual);
         }
 
         [TestMethod]
-        public void HyperbandOptimizer_Optimize()
+        public async Task HyperbandOptimizer_Optimize()
         {
             var parameters = new IParameterSpec[]
             {
@@ -48,20 +49,20 @@ namespace SharpLearning.Optimization.Test
             };
 
             var random = new Random(343);
-            OptimizerResult minimize(double[] p, double r)
+            Task<OptimizerResult> minimize(double[] p, double r)
             {
                 var error = random.NextDouble();
-                return new OptimizerResult(p, error);
+                return Task.FromResult(new OptimizerResult(p, error));
             }
 
             var sut = new HyperbandOptimizer(
-                parameters, 
-                maximumBudget: 81, 
-                eta: 5, 
+                parameters,
+                maximumBudget: 81,
+                eta: 5,
                 skipLastIterationOfEachRound: false,
                 seed: 34);
 
-            var actual = sut.Optimize(minimize);
+            var actual = await sut.Optimize(minimize);
 
             AssertOptimizerResults(Expected, actual);
         }

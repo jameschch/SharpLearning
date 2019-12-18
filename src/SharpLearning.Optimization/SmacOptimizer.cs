@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SharpLearning.Containers.Extensions;
 using SharpLearning.Optimization.ParameterSamplers;
 using SharpLearning.RandomForest.Learners;
@@ -105,28 +106,28 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult OptimizeBest(Func<double[], OptimizerResult> functionToMinimize) =>
+        public async Task<OptimizerResult> OptimizeBest(Func<double[], Task<OptimizerResult>> functionToMinimize) =>
             // Return the best model found.
-            Optimize(functionToMinimize).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
+            (await Optimize(functionToMinimize)).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
 
         /// <summary>
         /// Minimizes the provided function
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult[] Optimize(Func<double[], OptimizerResult> functionToMinimize)
+        public async Task<OptimizerResult[]> Optimize(Func<double[], Task<OptimizerResult>> functionToMinimize)
         {
             var initialParameterSets = ProposeParameterSets(m_randomStartingPointsCount, null);
 
             // Initialize the search
             var results = new List<OptimizerResult>();
-            var initializationResults = RunParameterSets(functionToMinimize, initialParameterSets);
+            var initializationResults = await RunParameterSets(functionToMinimize, initialParameterSets);
             results.AddRange(initializationResults);
 
             for (int iteration = 0; iteration < m_iterations; iteration++)
             {
                 var parameterSets = ProposeParameterSets(m_functionEvaluationsPerIterationCount, results);
-                var iterationResults = RunParameterSets(functionToMinimize, parameterSets);
+                var iterationResults = await RunParameterSets(functionToMinimize, parameterSets);
                 results.AddRange(iterationResults);
             }
 
@@ -139,14 +140,14 @@ namespace SharpLearning.Optimization
         /// <param name="functionToMinimize"></param>
         /// <param name="parameterSets"></param>
         /// <returns></returns>
-        public List<OptimizerResult> RunParameterSets(Func<double[], OptimizerResult> functionToMinimize, 
+        public async Task<List<OptimizerResult>> RunParameterSets(Func<double[], Task<OptimizerResult>> functionToMinimize, 
             double[][] parameterSets)
         {
             var results = new List<OptimizerResult>();
             foreach (var parameterSet in parameterSets)
             {
                 // Get the current parameters for the current point
-                var result = functionToMinimize(parameterSet);
+                var result = await functionToMinimize(parameterSet);
                 results.Add(result);
             }
 

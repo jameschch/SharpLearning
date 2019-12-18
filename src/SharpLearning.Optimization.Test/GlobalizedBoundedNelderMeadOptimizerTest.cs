@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static SharpLearning.Optimization.Test.ObjectiveUtilities;
 
@@ -12,7 +13,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void GlobalizedBoundedNelderMeadOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
+        public async Task GlobalizedBoundedNelderMeadOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -26,7 +27,7 @@ namespace SharpLearning.Optimization.Test
                     maxDegreeOfParallelism: maxDegreeOfParallelism.Value) : 
                 new GlobalizedBoundedNelderMeadOptimizer(parameters, 5, 1e-5, 10);
 
-            var actual = sut.OptimizeBest(Minimize);
+            var actual = await sut.OptimizeBest(Minimize);
 
             Assert.AreEqual(actual.Error, -0.99999949547279676, Delta);
             Assert.AreEqual(actual.ParameterSet.Length, 3);
@@ -41,7 +42,7 @@ namespace SharpLearning.Optimization.Test
         [DataRow(2)]
         [DataRow(-1)]
         [DataRow(null)]
-        public void GlobalizedBoundedNelderMeadOptimizer_Optimize(int? maxDegreeOfParallelism)
+        public async Task GlobalizedBoundedNelderMeadOptimizer_Optimize(int? maxDegreeOfParallelism)
         {
             var parameters = new MinMaxParameterSpec[]
             {
@@ -53,7 +54,7 @@ namespace SharpLearning.Optimization.Test
                     maxDegreeOfParallelism: maxDegreeOfParallelism.Value) : 
                 new GlobalizedBoundedNelderMeadOptimizer(parameters, 5, 1e-5, 10);
 
-            var results = sut.Optimize(MinimizeWeightFromHeight);
+            var results = await sut.Optimize(MinimizeWeightFromHeight);
             var actual = new OptimizerResult[] { results.First(), results.Last() };
 
             var expected = new OptimizerResult[]

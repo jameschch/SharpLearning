@@ -40,12 +40,12 @@ namespace SharpLearning.Optimization
         /// <param name="c2">Learning factor weighting global best solution. (default is 2)</param>
         /// <param name="seed">Seed for the random initialization and velocity corrections</param>
         /// <param name="maxDegreeOfParallelism">Maximum number of concurrent operations (default is -1 (unlimited))</param>
-        public ParticleSwarmOptimizer(IParameterSpec[] parameters, 
-            int maxIterations, 
-            int numberOfParticles = 10, 
-            double c1 = 2, 
-            double c2 = 2, 
-            int seed = 42, 
+        public ParticleSwarmOptimizer(IParameterSpec[] parameters,
+            int maxIterations,
+            int numberOfParticles = 10,
+            double c1 = 2,
+            double c2 = 2,
+            int seed = 42,
             int maxDegreeOfParallelism = -1)
         {
             if (maxIterations <= 0) { throw new ArgumentException("maxIterations must be at least 1"); }
@@ -71,16 +71,16 @@ namespace SharpLearning.Optimization
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult OptimizeBest(Func<double[], OptimizerResult> functionToMinimize) =>
+        public async Task<OptimizerResult> OptimizeBest(Func<double[], Task<OptimizerResult>> functionToMinimize) =>
             // Return the best model found.
-            Optimize(functionToMinimize).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
+            (await Optimize(functionToMinimize)).Where(v => !double.IsNaN(v.Error)).OrderBy(r => r.Error).First();
 
         /// <summary>
         /// Optimization using swarm optimization. Returns results for all particles.
         /// </summary>
         /// <param name="functionToMinimize"></param>
         /// <returns></returns>
-        public OptimizerResult[] Optimize(Func<double[], OptimizerResult> functionToMinimize)
+        public async Task<OptimizerResult[]> Optimize(Func<double[], Task<OptimizerResult>> functionToMinimize)
         {
             var particles = new double[m_numberOfParticles][];
 
@@ -126,9 +126,9 @@ namespace SharpLearning.Optimization
             for (int iterations = 0; iterations < m_maxIterations; iterations++)
             {
                 var options = new ParallelOptions { MaxDegreeOfParallelism = m_maxDegreeOfParallelism };
-                Parallel.For(0, m_numberOfParticles, options, (i) =>
+                Parallel.For(0, m_numberOfParticles, options, async (i) =>
                 {
-                    var result = functionToMinimize(particles[i]);
+                    var result = await functionToMinimize(particles[i]);
                     lock (m_bestLocker)
                     {
                         if (result.Error < pBestScores[i])
