@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dasync.Collections;
 using SharpLearning.Containers.Arithmetic;
 using SharpLearning.Optimization.ParameterSamplers;
 
@@ -33,7 +34,7 @@ namespace SharpLearning.Optimization
         readonly IParameterSampler m_sampler;
         readonly int m_maxFunctionEvaluations;
         int m_totalFunctionEvaluations;
-        readonly int m_maxDegreeOfParallelism = -1;
+        readonly int m_maxDegreeOfParallelism = 0;
 
         /// <summary>
         /// Globalized bounded Nelder-Mead method. This version of Nelder-Mead optimization 
@@ -68,7 +69,7 @@ namespace SharpLearning.Optimization
             double rho = -0.5,
             double sigma = 0.5,
             int seed = 324,
-            int maxDegreeOfParallelism = -1)
+            int maxDegreeOfParallelism = 0)
         {
             if (maxIterationsWithoutImprovement <= 0) { throw new ArgumentException("maxIterationsWithoutImprovement must be at least 1"); }
             if (maxFunctionEvaluations < 0) { throw new ArgumentException("maxFunctionEvaluations must be at least 1"); }
@@ -127,9 +128,7 @@ namespace SharpLearning.Optimization
                     new OptimizerResult(prevBest.ParameterSet, prevBest.Error)
                 };
 
-                var options = new ParallelOptions { MaxDegreeOfParallelism = m_maxDegreeOfParallelism };
-
-                Parallel.For(0, dim, options, async (i) =>
+                await Enumerable.Range(0, dim).ParallelForEachAsync(maxDegreeOfParallelism: m_maxDegreeOfParallelism, asyncItemAction: async (i) =>
                 {
                     var a = (0.02 + 0.08 * m_random.NextDouble()) * (m_parameters[i].Max - m_parameters[i].Min); // % simplex size between 2%-8% of min(xrange)
 

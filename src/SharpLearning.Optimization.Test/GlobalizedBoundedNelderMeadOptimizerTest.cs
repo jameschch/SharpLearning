@@ -11,7 +11,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(1)]
         [DataRow(2)]
-        [DataRow(-1)]
+        [DataRow(0)]
         [DataRow(null)]
         public async Task GlobalizedBoundedNelderMeadOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
@@ -40,7 +40,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(1)]
         [DataRow(2)]
-        [DataRow(-1)]
+        [DataRow(0)]
         [DataRow(null)]
         public async Task GlobalizedBoundedNelderMeadOptimizer_Optimize(int? maxDegreeOfParallelism)
         {

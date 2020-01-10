@@ -11,7 +11,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(1)]
         [DataRow(2)]
-        [DataRow(-1)]
+        [DataRow(0)]
         [DataRow(null)]
         public async Task ParticleSwarmOptimizer_OptimizeBest(int? maxDegreeOfParallelism)
         {
@@ -39,7 +39,7 @@ namespace SharpLearning.Optimization.Test
         [TestMethod]
         [DataRow(1)]
         [DataRow(2)]
-        [DataRow(-1)]
+        [DataRow(0)]
         [DataRow(null)]
         public async Task ParticleSwarmOptimizer_Optimize(int? maxDegreeOfParallelism)
         {

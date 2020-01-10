@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dasync.Collections;
 using SharpLearning.Containers.Arithmetic;
 using SharpLearning.Optimization.ParameterSamplers;
 
@@ -46,7 +47,7 @@ namespace SharpLearning.Optimization
             double c1 = 2,
             double c2 = 2,
             int seed = 42,
-            int maxDegreeOfParallelism = -1)
+            int maxDegreeOfParallelism = 0)
         {
             if (maxIterations <= 0) { throw new ArgumentException("maxIterations must be at least 1"); }
             if (numberOfParticles < 1) { throw new ArgumentException("numberOfParticles must be at least 1"); }
@@ -106,11 +107,13 @@ namespace SharpLearning.Optimization
                 minParameters[i] = m_parameters[i].Min;
             }
 
-            var pBest = Enumerable.Range(0, m_numberOfParticles)
+            var indexes = Enumerable.Range(0, m_numberOfParticles);
+
+            var pBest = indexes
                 .Select(p => new double[m_parameters.Length])
                 .ToArray();
 
-            var pBestScores = Enumerable.Range(0, m_numberOfParticles)
+            var pBestScores = indexes
                 .Select(p => double.MaxValue)
                 .ToArray();
 
@@ -125,24 +128,23 @@ namespace SharpLearning.Optimization
             // iterate for find best
             for (int iterations = 0; iterations < m_maxIterations; iterations++)
             {
-                var options = new ParallelOptions { MaxDegreeOfParallelism = m_maxDegreeOfParallelism };
-                Parallel.For(0, m_numberOfParticles, options, async (i) =>
+                await indexes.ParallelForEachAsync(maxDegreeOfParallelism: m_maxDegreeOfParallelism, asyncItemAction: async (i) =>
                 {
-                    var result = await functionToMinimize(particles[i]);
-                    lock (m_bestLocker)
-                    {
-                        if (result.Error < pBestScores[i])
-                        {
-                            pBest[i] = result.ParameterSet;
-                            pBestScores[i] = result.Error;
-                        }
+                   var result = await functionToMinimize(particles[i]);
+                   lock (m_bestLocker)
+                   {
+                       if (result.Error < pBestScores[i])
+                       {
+                           pBest[i] = result.ParameterSet;
+                           pBestScores[i] = result.Error;
+                       }
 
-                        if (result.Error < gBest.Error)
-                        {
-                            gBest = new OptimizerResult(result.ParameterSet.ToArray(), result.Error);
-                            //Trace.WriteLine(gBest.Error);
-                        }
-                    }
+                       if (result.Error < gBest.Error)
+                       {
+                           gBest = new OptimizerResult(result.ParameterSet.ToArray(), result.Error);
+                           //Trace.WriteLine(gBest.Error);
+                       }
+                   }
                 });
 
                 for (int i = 0; i < m_numberOfParticles; i++)
